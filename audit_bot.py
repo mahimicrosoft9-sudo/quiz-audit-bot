@@ -15,7 +15,6 @@ from telegram.ext import (
     ContextTypes
 )
 
-import config
 import db
 
 logging.basicConfig(
@@ -26,7 +25,10 @@ logger = logging.getLogger("audit_bot")
 
 # Admin Bot Token
 AUDIT_BOT_TOKEN = os.getenv("AUDIT_BOT_TOKEN", "8886544302:AAG9u_Xcv_n4mwOSTQzg4i66_F41QpNgN5Y").strip()
-OWNER_ID = config.OWNER_ID or 6416451659
+try:
+    OWNER_ID = int(os.getenv("OWNER_ID", "6416451659").strip())
+except ValueError:
+    OWNER_ID = 6416451659
 
 def is_owner(user_id: int) -> bool:
     return user_id == OWNER_ID
