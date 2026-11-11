@@ -15,6 +15,24 @@ from telegram.ext import (
     ContextTypes
 )
 
+from http.server import HTTPServer, BaseHTTPRequestHandler
+import threading
+
+class HealthCheckHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.send_header("Content-type", "text/plain")
+        self.end_headers()
+        self.wfile.write(b"Audit Bot is Running!")
+
+    def log_message(self, format, *args):
+        return  # Silence http logs
+
+def start_health_check_server():
+    port = int(os.getenv("PORT", "10000"))
+    server = HTTPServer(("0.0.0.0", port), HealthCheckHandler)
+    server.serve_forever()
+
 import db
 
 logging.basicConfig(
@@ -173,7 +191,11 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.edit_message_text("\n".join(lines), reply_markup=back_kb, parse_mode="Markdown")
 
 def main():
-    print("🚀 Starting Audit & Attendance Bot...")
+    print("🚀 Starting Web Health Check Server for Render...", flush=True)
+    t = threading.Thread(target=start_health_check_server, daemon=True)
+    t.start()
+
+    print("🚀 Starting Audit & Attendance Bot...", flush=True)
     app = ApplicationBuilder().token(AUDIT_BOT_TOKEN).build()
     app.add_handler(CommandHandler("start", start_command))
     app.add_handler(CommandHandler("report", start_command))
